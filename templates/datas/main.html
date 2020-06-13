@@ -1,0 +1,20 @@
+{%extends 'base.html'%}
+{%block content%}
+<div class="container">
+    {% if view == 'main' %}
+        <i class="fas fa-h1 :HELLO   "></i>
+    {% elif view == 'load'%}
+        <div class="d-flex flex-row">
+            <div class="p-2">
+                <form action="." method="POST" enctype="multipart/form-data">{% csrf_token %}
+                    <input class="form-control-lg" type="file" name="data">
+                    <button type="submit" class="btn btn-primary" name="btn" value="send">Send</button>
+                </form>
+            </div>
+        </div>
+    {% elif view == 'send'%}
+    
+    {% endif %}
+
+</div>
+{%endblock%}
