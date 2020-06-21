@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from . import toolbox
+from . import application
 
-tb = toolbox.DataHandler()
+tb = toolbox.Toolbox()
 
 
 def main_view(requests):
@@ -14,30 +15,40 @@ def main_view(requests):
         elif btn_response == 'send':
             try:
                 file = requests.FILES['data']
-                tb.save_file_as_df(file)
-                context['ctx'] = tb.return_df_col_names()
-                html_view = 'datas/sellect.html'
+                tb.create_raw_df(file)
+                context['view'] = btn_response
+                tb.create_raw_df_columns()
+                context['ctx'] = tb.get_raw_df_columns()
             except KeyError:
-                html_view = 'datas/load_file.html'
+                context['view'] = 'load'
         elif btn_response == 'sellect':
             q_dict = requests.POST
-            sellected_items = tb.q_dict_handler(q_dict)
+            sellected_items = tb.query_dict_to_list(q_dict)
             tb.save_sellected_columns(sellected_items)
             if sellected_items is not None:
-                app_list = tb.create_app_list(sellected_items)
-                context['ctx'] = app_list
-                html_view = 'datas/app.html'
+                tb.create_app_list(sellected_items)
+                context['ctx'] = tb.get_app_list()
+                context['view'] = btn_response
             else:
                 context['ctx'] = tb.get_raw_df_columns()
-                html_view = 'datas/sellect.html'
+                context['view'] = 'send'
         elif btn_response in tb.get_app_list():
-            html_view = 'datas/app_handler.html'
+            context['view'] = btn_response
+            if btn_response == 'Customer Analysis':
+                tb.create_customer_list()
+                context['customers'] = tb.get_customer_list()
+                context['sellected_items'] = tb.get_sellected_list()
+        elif btn_response == 'process-cust':
+            keys = ['customer', 'sellected']
+            response_dict = tb.query_dictionary_handler(requests.POST, keys)
+            app = application.Customer(tb.get_data())
+            app.application(response_dict)
         # END CONDITION
         elif btn_response == 'main':
-            html_view = 'datas/main.html'
+            tb.clear_data()
+            context['view'] = btn_response
         else:
-            html_view = 'datas/main.html'
+            context['view'] = 'main'
     else:
         context['view'] = 'main'
-        html_view = 'datas/main.html'
     return render(requests, html_view, context)

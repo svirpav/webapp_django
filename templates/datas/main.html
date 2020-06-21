@@ -2,7 +2,7 @@
 {%block content%}
 <div class="container">
     {% if view == 'main' %}
-        <i class="fas fa-h1 :HELLO   "></i>
+        <h1>CSV Data handling project</h1>
     {% elif view == 'load'%}
         <div class="d-flex flex-row">
             <div class="p-2">
@@ -13,8 +13,45 @@
             </div>
         </div>
     {% elif view == 'send'%}
-    
+        <div class="d-flex flex-row">
+            <div class="p-2">
+                <form action="." method="POST">{% csrf_token %}
+                    {% for item in ctx %}
+                        <input type="checkbox" name="ctx" value="{{item}}">{{item}}
+                        <br>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary" name="btn" value="sellect">Sellect</button>
+                </form>
+            </div>
+        </div> 
+    {% elif view == 'sellect'%}
+        <form action="." method="POST">{% csrf_token %}
+            {% for item in ctx %}
+                <div class="flex flex-column">
+                    <button type="submit" class="btn btn-primary btn-lg" style="margin-top: 10px; width: 200px" name="btn" value="{{item}}">{{item}}</button>
+                </div>
+            {% endfor %}
+        </form>
+    {% elif view == 'Customer Analysis'%}
+        <form action="." method="POST">{% csrf_token %}
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-sm-3">
+                    {% for customer in customers %}
+                        <input type="checkbox" name="customer" value="{{customer}}">{{customer}}
+                        <br>
+                    {% endfor %}
+                </div>
+                <div class="col-sm-3">
+                    {% for sellected_item in sellected_items %}
+                        <input type="checkbox" name="sellected" value="{{sellected_item}}">{{sellected_item}}
+                        <br>
+                    {% endfor %}
+                </div>
+                <div class="col-sm-2">
+                    <button type="submit" class="btn btn-primary" name="btn" value="process-cust">Process</button>
+                </div>
+            </div>
+        </form> 
     {% endif %}
-
 </div>
 {%endblock%}
