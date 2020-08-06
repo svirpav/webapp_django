@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
     integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -13,23 +13,28 @@
     <title>DataScienceAPP</title>
 </head>
 <body>
-    <nav class="site-header sticky-top py-1" style="background-color: rgb(214, 228, 228);">
+    <nav class="site-header sticky-top p-1" style="background-color: rgb(130, 192, 228);">
         <div class="container d-flex flex-row justify-content-start">
-          <a class="p-2" href="#" aria-label="Product" style="margin-top: 10px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
-                fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
-                stroke-width="2" class="d-block mx-auto" role="img" viewBox="0 0 24 24" 
-                focusable="false"><title>Header</title><circle cx="12" cy="12" r="15"/>
-                <path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83m13.79-4l-5.74 9.94"/>
+          <div class="p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="55" height="55" class="p-1"
+              fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" 
+              stroke-width="2" class="d-block mx-auto" role="img" viewBox="0 0 24 24" 
+              focusable="false"><circle cx="12" cy="12" r="15"/>
+              <path d="M14.31 8l5.74 9.94M9.69 8h11.48M7.38 12l5.74-9.94M9.69 16L3.95 6.06M14.31 16H2.83m13.79-4l-5.74 9.94"/>
             </svg>
-          </a>
-          <h2 class="p-2">Data Science</h2>
-          <form class="p-2" action="." method="POST">  {% csrf_token %}
-              <button type="submit" class="btn btn-primary" name="btn" value="main">Main</button>
-              <button type="submit" class="btn btn-primary" name="btn" value="load">Load File</button>
-          </form>
+          </div>
+          <h5>DS</h5>
+          <div class="p-3">
+            <form action="." method="POST" enctype="multipart/form-data">{% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-lg" name="app-btn" value="base">Base</button>
+              <button type="submit" class="btn btn-primary btn-lg" name="app-btn" value="ifs">IFS</button>
+            </form>
+          </div>
         </div>
       </nav>
     {%block content%}{%endblock%}
+    <footer class="container py-4">
+
+    </footer>
 </body>
 </html>

@@ -1,57 +1,96 @@
 {%extends 'base.html'%}
 {%block content%}
-<div class="container">
-    {% if view == 'main' %}
-        <h1>CSV Data handling project</h1>
-    {% elif view == 'load'%}
-        <div class="d-flex flex-row">
-            <div class="p-2">
-                <form action="." method="POST" enctype="multipart/form-data">{% csrf_token %}
-                    <input class="form-control-lg" type="file" name="data">
-                    <button type="submit" class="btn btn-primary" name="btn" value="send">Send</button>
-                </form>
-            </div>
-        </div>
-    {% elif view == 'send'%}
-        <div class="d-flex flex-row">
-            <div class="p-2">
-                <form action="." method="POST">{% csrf_token %}
-                    {% for item in ctx %}
-                        <input type="checkbox" name="ctx" value="{{item}}">{{item}}
-                        <br>
-                    {% endfor %}
-                    <button type="submit" class="btn btn-primary" name="btn" value="sellect">Sellect</button>
-                </form>
-            </div>
-        </div> 
-    {% elif view == 'sellect'%}
-        <form action="." method="POST">{% csrf_token %}
-            {% for item in ctx %}
-                <div class="flex flex-column">
-                    <button type="submit" class="btn btn-primary btn-lg" style="margin-top: 10px; width: 200px" name="btn" value="{{item}}">{{item}}</button>
+
+{% if app == 'base' %}
+    <div class="container">
+        <h1>Please sellect application</h1>
+    </div>
+{% elif app == 'ifs'%}
+        <div class="container-fluid">
+            <form action="." method="POST" enctype="multipart/form-data">{% csrf_token %}
+                <div class="d-flex d-row" style="margin-top: 4ex;">
+                    <div class="col-lg-1" style="background-color: #f7eee8;">
+                        <div class="container-fluid" style="margin-top: 4ex;">
+                            {% if ifs == 'base' %}
+                                <div class="row" style="margin-top: 1ex;">
+                                    <button style="width: 10ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="erase">Clean</button>
+                                </div>
+                                <div class="row" style="margin-top: 1ex;">
+                                    <button style="width: 10ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="load">Load</button>
+                                </div>
+                                {% if ifs_files %}
+                                    <div class="row" style="margin-top: 1ex;">
+                                        <button style="width: 10ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="files">Files</button>
+                                    </div>
+                                {% endif %}
+                            {% elif ifs == 'customer'%}
+                                <div class="row" style="margin-top: 1ex;">
+                                    <button style="width: 10ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="load">Back</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-9" style="background-color: rgb(221, 221, 221);">
+                        <div class="container-fluid" style="margin-top: 4ex;">
+                            {% if ifs == 'base' %}
+                                {% if ifs_view == 'base' %}
+                                    <h2>Main View</h2>
+                                {% elif  ifs_view == 'load'%}
+                                    <input class="form-control-lg" type="file" name="data">
+                                    <button style="width: 10ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="upload">Upload</button>
+                                {% elif ifs_view == 'file_sellection'%}
+                                    {% for item in file_sellections %}
+                                        <div class="row">
+                                            <input type="checkbox" name="file_sellected" value="{{ item }}">{{ item }}
+                                        </div>
+                                    {% endfor %}
+                                {% elif ifs_view == 'data_sellection'%}
+                                    {% for key, value in ifs__view_data.items %}
+                                        <div class="row" style="margin-top: 2ex;">
+                                            <input type="checkbox" name="order_type" value="{{ key }}">{{ key }}
+                                        </div>
+                                        <div class="row">
+                                            {% for grp in value %}
+                                                <div class="col-sm-3">
+                                                    {% for item in grp %}
+                                                        <input type="checkbox" name="{{ key }}_items" value="{{item}}">{{item}}
+                                                        <br>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <hr>
+                                    {% endfor %}
+                                {% elif ifs_view == 'sellect_data_to_delete'%}
+                                    {% for item in data_to_sellect %}
+                                        <div class="row" style="margin-top: 10px; margin-left: 10px">
+                                            <input type="checkbox" name="sellect_to_delete" value="{{item}}">{{item}}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2" style="background-color: rgb(205, 245, 248);">
+                        <div class="container-fluid">
+                            {% if ifs == 'base' %}
+                                {% if ifs_view == 'file_sellection' %}
+                                    <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="prepare">Prepare-Data</button>
+                                {% elif ifs_view == 'sellect_data_to_delete'%}
+                                    <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="erase-data">Erase-Data</button>
+                                {% elif ifs_view == 'ifs_apps'%}
+                                    {% for btn in ifs_app_list %}
+                                        <div class="row" style="margin-top: 1ex;">
+                                            <button style="width: 20ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="{{btn}}">{{btn}}</button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-        </form>
-    {% elif view == 'Customer Analysis'%}
-        <form action="." method="POST">{% csrf_token %}
-            <div class="row" style="margin-top: 10px;">
-                <div class="col-sm-3">
-                    {% for customer in customers %}
-                        <input type="checkbox" name="customer" value="{{customer}}">{{customer}}
-                        <br>
-                    {% endfor %}
-                </div>
-                <div class="col-sm-3">
-                    {% for sellected_item in sellected_items %}
-                        <input type="checkbox" name="sellected" value="{{sellected_item}}">{{sellected_item}}
-                        <br>
-                    {% endfor %}
-                </div>
-                <div class="col-sm-2">
-                    <button type="submit" class="btn btn-primary" name="btn" value="process-cust">Process</button>
-                </div>
-            </div>
-        </form> 
-    {% endif %}
-</div>
+            </form>
+    </div>
+{% endif %}
+ 
 {%endblock%}
