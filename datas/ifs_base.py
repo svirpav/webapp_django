@@ -2,7 +2,7 @@ from . import utils
 import pandas as pd
 
 
-class Ifs_Base:
+class Base:
 
     def __init__(self):
         super().__init__
@@ -76,7 +76,8 @@ class Ifs_Base:
                 print(format(err), ':', item)
                 error_list.append(item)
         for error in error_list:
-            utils.datetime_error_handling(loc_data[error])
+            loc_data[error] = utils.datetime_error_handling(loc_data[error])
+            loc_data[error] = loc_data[error].astype('datetime64')
         return loc_data
 
     ''' Helping Functions '''

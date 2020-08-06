@@ -1,6 +1,7 @@
 ''' UTILS '''
 from datetime import datetime
 import dateutil
+import pandas as pd
 
 
 def get_cell_size(length, columns):
@@ -32,13 +33,26 @@ def create_file_name(date, sep, name):
 
 
 def return_date_string():
-    return str(datetime.today().strftime('%Y-%m-%d %H:%M'))
+    return str(datetime.now().strftime('%Y-%m-%d %H:%M'))
 
 
 def datetime_error_handling(series):
+    item_list = []
     for item in series:
         x = dateutil.parser.parse(item)
-        print(x)
+        if x.year < 2000:
+            y = return_correct_year(x.year)
+            x = x.replace(year=y)
+        item_list.append(x)
+    return pd.Series(item_list)
+
+
+def return_correct_year(year):
+    st = str(year)
+    if st[-1] == '4':
+        return 2014
+    elif st[-1] == '5':
+        return 2015
 
 
 class Categories:

@@ -1,5 +1,5 @@
 from . import utils
-from . import ifs
+from . import ifs_base
 from . import data
 from datetime import datetime
 
@@ -56,7 +56,7 @@ class Ifs:
     def __init__(self, context):
         super().__init__()
         self.__context = context
-        self.__ifs_base = ifs.Ifs_Base()
+        self.__ifs_base = ifs_base.Base()
         self.__data = data.IFS()
         self.__items = utils.Categories()
 
@@ -112,6 +112,8 @@ class Ifs:
                     grouped_data[item] =\
                         self.__ifs_base.convert_to_datetime(
                             grouped_data[item], datetime_item)
+                    print(item)
+                    print(grouped_data[item])
                 # print(self.__data.data_store[response['file_sellected']])
             elif response['ifs-btn'] == 'files':
                 self.__context['ifs_view'] = 'file_sellection'
