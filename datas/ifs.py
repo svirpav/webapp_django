@@ -1,126 +1,103 @@
-''' UTILS '''
-from datetime import datetime
-import dateutil
+from . import utils
+from . import data
 import pandas as pd
-import locale
-import math
 
 
-def query_dict_to_dict(qdict):
-    q_dict = {}
-    a = qdict.dict()
-    for item in a:
-        q_dict[item] = qdict.getlist(item)
-    q_dict = __dict_handler(q_dict)
-    return q_dict
+class PepareData(data.BaseDataHandling):
+
+    @staticmethod
+    def _to_string(data, exclude_list):
+        loc_data = data.copy(deep=True)
+        items_list =\
+            utils.create_list_from_data_frame_columns(loc_data.columns)
+        error_list = []
+        for item in items_list:
+            if item not in exclude_list:
+                try:
+                    loc_data[item] = loc_data[item].astype('string')
+                except ValueError as err:
+                    print(err, ':', item)
+                    error_list.append(item)
+        return loc_data
+
+    @staticmethod
+    def _to_categorical(data, category_list):
+        loc_data = data.copy(deep=True)
+        items_list =\
+            utils.create_list_from_data_frame_columns(loc_data.columns)
+        for item in category_list:
+            if item in items_list:
+                loc_data[item] = loc_data[item].astype('category')
+        return loc_data
+
+    @staticmethod
+    def _to_datetime(data, items_list):
+        loc_data = data.copy(deep=True)
+        datetime_list = items_list.copy()
+        columns_list =\
+            utils.create_list_from_data_frame_columns(loc_data.columns)
+        datetime_list = utils.update_list(datetime_list, columns_list, 'Date')
+        error_list = []
+        for item in datetime_list:
+            try:
+                loc_data[item] = loc_data[item].astype('object')
+                loc_data[item] = loc_data[item].astype('datetime64')
+            except ValueError as err:
+                print(format(err), ':', item)
+                error_list.append(item)
+        for error in error_list:
+            loc_data[error] = utils.datetime_error_handling(loc_data[error])
+            loc_data[error] = loc_data[error].astype('datetime64')
+        return loc_data
+
+    @staticmethod
+    def _to_int(data, int_list):
+        loc_data = data.copy(deep=True)
+        items_list =\
+            utils.create_list_from_data_frame_columns(loc_data.columns)
+        error_items_list = []
+        for item in int_list:
+            if item in items_list:
+                if loc_data[item].isna().any():
+                    loc_data[item] = loc_data[item].fillna('0')
+                try:
+                    loc_data[item] = loc_data[item].astype('int')
+                except ValueError as err:
+                    print(format(err))
+                    error_items_list.append(item)
+        return loc_data
+
+    @staticmethod
+    def _to_float(data, float_list):
+        loc_data = data.copy(deep=True)
+        items_list =\
+            utils.create_list_from_data_frame_columns(loc_data.columns)
+        error_list = []
+        for item in float_list:
+            if item in items_list:
+                try:
+                    loc_data[item] = loc_data[item].astype('float')
+                except ValueError as err:
+                    print(format(err), ':', item)
+                    error_list.append(item)
+        for error in error_list:
+            loc_data[error] = utils.remove_space_from_string(loc_data[error])
+            loc_data[error] = utils.localize_float_units(loc_data[error])
+            loc_data[error] = loc_data[error].astype('float')
+        return loc_data
+
+    @staticmethod
+    def _create_date_series(series, name):
+        items_list = []
+        for item in series:
+            if name == 'Year':
+                items_list.append(int(item.strftime('%Y')))
+            elif name == 'Month':
+                items_list.append(int(item.strftime('%m')))
+        return pd.Series(items_list)
 
 
-def __dict_handler(ddict):
-    response = ddict
-    for item in response:
-        if len(response[item]) == 1:
-            response[item] = response[item][0]
-    return response
-
-
-def create_data_dispay_name(file_name):
-    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
-    sep = '_'
-    temp_list = [now, file_name]
-    name = sep.join(temp_list)
-    return name
-
-
-def remove_set_from_list(inital_list, sellected_list):
-    f_inital_list = inital_list.copy()
-    f_sellected_list = sellected_list.copy()
-    set_1 = set(f_inital_list)
-    set_2 = set(f_sellected_list)
-    updated_set = set_1.difference(set_2)
-    return list(updated_set)
-
-
-def return_date_string():
-    return str(datetime.now().strftime('%Y-%m-%d %H:%M'))
-
-
-def datetime_error_handling(series):
-    item_list = []
-    for item in series:
-        x = dateutil.parser.parse(item)
-        if x.year < 2000:
-            y = return_correct_year(x.year)
-            x = x.replace(year=y)
-        item_list.append(x)
-    return pd.Series(item_list)
-
-
-def return_correct_year(year):
-    st = str(year)
-    if st[-1] == '4':
-        return 2014
-    elif st[-1] == '5':
-        return 2015
-
-
-def remove_space_from_string(series):
-    lst = []
-    for item in series:
-        if ' ' in item:
-            item = item.replace(' ', '')
-            lst.append(item)
-        else:
-            lst.append(item)
-    return pd.Series(lst)
-
-
-def localize_float_units(series):
-    locale.setlocale(locale.LC_ALL, '')
-    loc = locale.getlocale()
-    lst = []
-    for item in series:
-        if loc[0] == 'en_US':
-            x = item.replace(',', '.')
-            lst.append(x)
-    return pd.Series(lst)
-
-
-def create_grouped_list(nr_of_groups, item_list):
-    length = len(item_list)
-    cell_size = get_cell_size(length, nr_of_groups)
-    start = 0
-    end = cell_size
-    grp_columns = []
-    for i in range(nr_of_groups):
-        grp_columns.append(item_list[start:end])
-        start = end
-        end = end + cell_size
-        if end > length:
-            end = length
-    return grp_columns
-
-
-def create_list_from_data_frame_columns(df_columns):
-    columns = []
-    for item in df_columns:
-        columns.append(item)
-    return columns
-
-
-def get_cell_size(length, columns):
-    grp_size = length / columns
-    return math.ceil(grp_size)
-
-
-def update_list(datetime_list, columns_list, key):
-    items_list = datetime_list.copy()
-    for item in columns_list:
-        if key in item:
-            items_list.append(item)
-    return items_list
-
-
-class Categories:
+class DataCategories:
 
     def __init__(self):
         super().__init__()
