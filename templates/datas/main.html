@@ -53,7 +53,7 @@
                                             {% for grp in value %}
                                                 <div class="col-sm-3">
                                                     {% for item in grp %}
-                                                        <input type="checkbox" name="{{ key }}_items" value="{{item}}">{{item}}
+                                                        <input type="checkbox" name="{{ key }}" value="{{item}}">{{item}}
                                                         <br>
                                                     {% endfor %}
                                                 </div>
@@ -68,22 +68,31 @@
                                         </div>
                                     {% endfor %}
                                 {% endif %}
+                            {% elif ifs == 'customer'%}
+                            {% elif ifs == 'salespart'%}
+                            {% elif ifs == 'site'%}
                             {% endif %}
                         </div>
                     </div>
                     <div class="col-lg-2" style="background-color: rgb(205, 245, 248);">
-                        <div class="container-fluid">
+                        <div class="container-fluid" style="margin-top: 2ex">
                             {% if ifs == 'base' %}
                                 {% if ifs_view == 'file_sellection' %}
                                     <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="prepare">Prepare-Data</button>
+                                {% elif ifs_view == 'data_sellection' %}
+                                    <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="sellect">Sellect</button>
+                                {% elif ifs_view == 'sub_app_sellection'%}
+                                    {% for key, value in available_apps.items %}
+                                            <h5>{{ key }}</h5>
+                                            {% for btn in value %}
+                                                <div class="row" style="margin-left: 1ex">
+                                                    <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="{{ key }}_{{ btn }}">{{ btn }}</button>
+                                                </div>
+                                        {% endfor %}
+                                        <hr>
+                                    {% endfor %}
                                 {% elif ifs_view == 'sellect_data_to_delete'%}
                                     <button style="width: 20ex; margin-top: 1ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="erase-data">Erase-Data</button>
-                                {% elif ifs_view == 'ifs_apps'%}
-                                    {% for btn in ifs_app_list %}
-                                        <div class="row" style="margin-top: 1ex;">
-                                            <button style="width: 20ex;" type="submit" class="btn btn-primary btn-lg" name="ifs-btn" value="{{btn}}">{{btn}}</button>
-                                        </div>
-                                    {% endfor %}
                                 {% endif %}
                             {% endif %}
                         </div>

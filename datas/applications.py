@@ -1,7 +1,6 @@
 from . import utils
-from . import ifs_base
+from . import ifs
 from . import data
-from datetime import datetime
 
 
 class App:
@@ -21,8 +20,7 @@ class App:
                 if self.__context['app'] == 'base':
                     pass
                 elif self.__context['app'] == 'ifs':
-                    if 'ifs-btn' in response:
-                        self.__context = self.ifs.handler(request)
+                    self.__context = self.ifs.app(request)
         elif request.method == 'GET':
             print('GET')
         else:
@@ -42,109 +40,154 @@ class App:
         self.__context['app'] = name
         if name == 'ifs':
             self.__context['ifs'] = 'base'
-            self.ifs = Ifs(self.__context)
+            self.ifs = IfsApp(self.__context)
 
     def __dlt_app_data(self):
-        # self.__context = None
+        self.__context = dict()
         self.__context['app'] = 'base'
 
 
-class Ifs:
+class IfsApp:
 
     __context = {}
 
     def __init__(self, context):
         super().__init__()
         self.__context = context
-        self.__ifs_base = ifs_base.Base()
-        self.__data = data.IFS()
-        self.__items = utils.Categories()
+        self.__prepare = ifs.PepareData()
+        self.__data = data.DataStore()
+        self.__categories = ifs.DataCategories()
 
-    def handler(self, request):
+    def app(self, request):
         response = utils.query_dict_to_dict(request.POST)
         if self.__context['ifs'] == 'base':
             if response['ifs-btn'] == 'load':
                 self.__context['ifs_view'] = 'load'
             elif response['ifs-btn'] == 'upload':
                 try:
-                    idx = utils.create_file_name(
-                        datetime.now().strftime('%Y-%m-%d %H:%M'), '_',
-                        request.FILES['data'].name)
-                    self.__data.data_name_store.append(idx)
-                    self.__data.data_store[idx] =\
-                        self.__ifs_base.csv_to_dataframe(request.FILES['data'])
-                    self.__context['file_sellections'] =\
-                        self.__data.data_name_store
-                    self.__context['ifs_view'] = 'file_sellection'
-                    self.__context['ifs_files'] = True
+                    file = request.FILES['data']
+                    self.__load_and_store(file)
                 except KeyError as error:
                     print(format(error), 'file was not loaded')
             elif response['ifs-btn'] == 'prepare':
-                data = self.__data.data_store[response['file_sellected']]
-                # print('IN :', data.memory_usage(deep=True).sum())
-                data =\
-                    self.__ifs_base.clean_data(
-                        data, self.__items.presellected_items)
-                column_list = self.__ifs_base.return_df_cols_list(data)
-                data = self.__ifs_base.object_to_string(data, column_list)
-                # print('FM :', data.memory_usage(deep=True).sum())
-                self.__data.data_store[response['file_sellected']] = data
-                grouped_data =\
-                    self.__ifs_base.return_grouped_data_dict(
-                        data, 'Order Type')
-                for item in grouped_data:
-                    grouped_data[item] =\
-                        self.__ifs_base.remove_bad_data(
-                            grouped_data[item], 95, column_list)
-                    grp_column_lst =\
-                        self.__ifs_base.return_df_cols_list(grouped_data[item])
-                    ctegorical_items = self.__items.categorical_items
-                    for unit in ctegorical_items:
-                        if unit not in grp_column_lst:
-                            ctegorical_items.remove(unit)
-                    grouped_data[item] =\
-                        self.__ifs_base.convert_to_categorical(
-                            grouped_data[item], ctegorical_items)
-                    datetime_item =\
-                        self.__ifs_base.find_and_return_date_items(
-                            self.__items.datetime_items,
-                            'Date', grp_column_lst)
-                    grouped_data[item] =\
-                        self.__ifs_base.convert_to_datetime(
-                            grouped_data[item], datetime_item)
-                    print(item)
-                    print(grouped_data[item])
-                # print(self.__data.data_store[response['file_sellected']])
-            elif response['ifs-btn'] == 'files':
-                self.__context['ifs_view'] = 'file_sellection'
-            elif response['ifs-btn'] == 'process':
                 try:
-                    self.__data =\
-                        self.__ifs_base.csv_to_dataframe(request.FILES['data'])
-                    cols_list =\
-                        self.__ifs_base.return_df_cols_list(
-                            self.__data.columns)
-                    grp_data_dict =\
-                        self.__ifs_base.return_grouped_data_dict(
-                            self.__data, 'Order Type')
+                    data_location = response['file_sellected']
+                    self.__format_data(data_location)
                     view_data = dict()
-                    for name in grp_data_dict:
-                        grp_data_dict[name] =\
-                            self.__ifs_base.remove_bad_data(
-                                grp_data_dict[name], 80, cols_list)
+                    grp_data = self.__data.grouped_data_store[data_location]
+                    for name in grp_data:
                         view_data[name] =\
-                            self.__ifs_base.return_df_cols_list(
-                                grp_data_dict[name].columns)
+                            utils.create_list_from_data_frame_columns(
+                                grp_data[name])
                     for name in view_data:
                         view_data[name] =\
-                            self.__ifs_base.create_group_columns(
+                            utils.create_grouped_list(
                                 4, view_data[name])
                     self.__context['ifs_view'] = 'data_sellection'
                     self.__context['ifs__view_data'] = view_data
-                except KeyError:
-                    pass
+                except KeyError as err:
+                    print(format(err))
+                    self.__context['ifs_view'] = 'base'
+                # print(self.__data.data_store[response['file_sellected']])
+            elif response['ifs-btn'] == 'files':
+                self.__context['ifs_view'] = 'file_sellection'
+            elif response['ifs-btn'] == 'sellect':
+                self.__context['available_apps'] =\
+                    self.__create_app_list_dict(response)
+                self.__context['ifs_view'] = 'sub_app_sellection'
+            elif response['ifs-btn'] == 'INT_Customer'\
+                    or 'NO_Customer'\
+                    or 'SEO_Customer'\
+                    or 'WAR_Customer':
+                self.__context['ifs'] = 'customer'
+            elif response['ifs-btn'] == 'INT_SalesPart'\
+                    or 'NO_SalesPart'\
+                    or 'SEO_SalesPart'\
+                    or 'WAR_SalesPart':
+                self.__context['ifs'] = 'salespart'
+            elif response['ifs-btn'] == 'INT_Site'\
+                    or 'NO_Site'\
+                    or 'SEO_Site'\
+                    or 'WAR_Site':
+                self.__context['ifs'] = 'site'
             elif response['ifs-btn'] == 'clean-data':
+                print(response)
+            else:
                 print(response)
         elif self.__context['ifs'] == 'customer':
             pass
         return self.__context
+
+    def __load_and_store(self, file):
+        idx = utils.create_data_dispay_name(file.name)
+        self.__data.data_name_store.append(idx)
+        self.__data.data_store[idx] =\
+            self.__prepare.csv_to_dataframe(file)
+        self.__context['file_sellections'] =\
+            self.__data.data_name_store
+        self.__context['ifs_view'] = 'file_sellection'
+        self.__context['ifs_files'] = True
+
+    def __format_data(self, data_location):
+        data = self.__data.data_store[data_location].copy(deep=True)
+        # print('IN :', data.memory_usage(deep=True).sum())
+        drop_items =\
+            utils.remove_set_from_list(
+                utils.create_list_from_data_frame_columns(data.columns),
+                self.__categories.presellected_items)
+        data = self.__prepare.drop_data(data, drop_items)
+        exempt_list = list(set(self.__categories.categorical_items +
+                               self.__categories.datetime_items +
+                               self.__categories.integer_items +
+                               self.__categories.float_items))
+        data =\
+            self.__prepare._to_string(data, exempt_list)
+        self.__data.data_store[data_location] = data.copy(deep=True)
+        grouped_data =\
+            self.__prepare.create_grouped_data_dict(
+                data, 'Order Type')
+        for item in grouped_data:
+            print('Handling group : ', item)
+            grouped_data[item] =\
+                self.__prepare.drop_bad_data(grouped_data[item], 95)
+            grouped_data[item] =\
+                self.__prepare._to_categorical(
+                    grouped_data[item],
+                    self.__categories.categorical_items)
+            grouped_data[item] =\
+                self.__prepare._to_datetime(
+                    grouped_data[item], self.__categories.datetime_items)
+            grouped_data[item] =\
+                self.__prepare._to_int(
+                    grouped_data[item], self.__categories.integer_items)
+            grouped_data[item] =\
+                self.__prepare._to_float(
+                    grouped_data[item], self.__categories.float_items)
+            for name in self.__categories.date_series:
+                grouped_data[item][name] =\
+                    self.__prepare._create_date_series(
+                    grouped_data[item]['Created'], name)
+        self.__data.grouped_data_store[data_location] =\
+            grouped_data.copy()
+
+    def __create_app_list_dict(self, response):
+        app_list_dict = dict()
+        if 'order_type' in response:
+            if isinstance(response['order_type'], list):
+                for item in response['order_type']:
+                    app_list_dict[item] =\
+                        self.__create_app_list(response[item])
+            else:
+                app_list_dict[response['order_type']] =\
+                    self.__create_app_list(response[response['order_type']])
+        return app_list_dict
+
+    def __create_app_list(self, items_list):
+        app_list = []
+        if set(self.__categories.customer_app_preset).issubset(items_list):
+            app_list.append('Customer')
+        if set(self.__categories.salespart_app_preset).issubset(items_list):
+            app_list.append('SalesPart')
+        if set(self.__categories.site_app_preset).issubset(items_list):
+            app_list.append('Site')
+        return app_list
